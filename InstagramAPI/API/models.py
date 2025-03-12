@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import FileExtensionValidator
 from django.utils.translation import gettext_lazy as _
 
-# Create your models here.
+# Models of the App
 class Comment(models.Model):
     """
     Comment details model
