@@ -29,6 +29,64 @@ class Comment(models.Model):
         related_name="comments",
     )
 
+
+class Likes(models.Model):
+    """
+    Likes model
+    """
+    user = models.ForeignKey(
+        "Account",
+        verbose_name=_("User"),
+        on_delete=models.CASCADE,
+        related_name="likes",
+    )
+    post = models.ForeignKey(
+        "Post",
+        verbose_name=_("Post"),
+        on_delete=models.CASCADE,
+        related_name="likes",
+    )
+
+
+class Story(models.Model):
+    """
+    Story details model
+    """
+    created_at = models.DateTimeField(
+        _("Created at"),
+        auto_now_add=True,
+    )
+    image = models.ImageField(
+        _("Image"),
+        upload_to="stories/",
+        validators=[FileExtensionValidator(["png", "jpg", "jpeg"])],
+    )
+    user = models.ForeignKey(
+        "Account",
+        verbose_name=_("User"),
+        on_delete=models.CASCADE,
+        related_name="stories",
+    )
+
+
+class SeenPost(models.Model):
+    """
+    Check which users have seen a post model
+    """
+    user = models.ForeignKey(
+        "Account",
+        verbose_name=_("User"),
+        on_delete=models.CASCADE,
+        related_name="seen_posts",
+    )
+    post = models.ForeignKey(
+        "Post",
+        verbose_name=_("Post"),
+        on_delete=models.CASCADE,
+        related_name="seen_by",
+    )
+
+
 class Post(models.Model):
     """
     Post details model
@@ -43,11 +101,7 @@ class Post(models.Model):
         validators=[FileExtensionValidator(["png", "jpg", "jpeg"])],
     )
 
-    likes = models.PositiveIntegerField(
-        _("Likes"),
-        default=0,
-    )
-    description = models.TextField(
+   description = models.TextField(
         _("Description"),
     )
 
