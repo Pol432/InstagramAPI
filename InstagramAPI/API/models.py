@@ -101,7 +101,7 @@ class Post(models.Model):
         validators=[FileExtensionValidator(["png", "jpg", "jpeg"])],
     )
 
-   description = models.TextField(
+    description = models.TextField(
         _("Description"),
     )
 
