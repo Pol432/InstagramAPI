@@ -26,16 +26,36 @@ class FollowerConnectionSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class UserBriefSerializer(serializers.ModelSerializer):
+    """Minimal serializer for user information in nested contexts"""
+    
+    class Meta:
+        model = Account
+        fields = ['id', 'username', 'profile_picture']
+
+
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for posts"""
     likes_count = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
     seen_count = serializers.SerializerMethodField()
+    user = UserBriefSerializer(read_only=True)
+    is_liked = serializers.SerializerMethodField()
     
     class Meta:
         model = Post
-        fields = ['id', 'created_at', 'image', 'description', 'likes_count', 'comments_count', 'seen_count']
-        read_only_fields = ['id', 'created_at', 'likes_count', 'comments_count', 'seen_count']
+        fields = [
+            'id', 
+            'created_at', 
+            'image', 
+            'description', 
+            'user',
+            'likes_count', 
+            'comments_count', 
+            'seen_count',
+            'is_liked'
+        ]
+        read_only_fields = ['id', 'created_at', 'user', 'likes_count', 'comments_count', 'seen_count', 'is_liked']
     
     def get_likes_count(self, obj):
         return obj.likes.count()
@@ -45,6 +65,25 @@ class PostSerializer(serializers.ModelSerializer):
     
     def get_seen_count(self, obj):
         return obj.seen_by.count()
+    
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(user=request.user).exists()
+        return False
+
+
+class PostDetailSerializer(PostSerializer):
+    """Detailed serializer for posts with comments and likes"""
+    comments = serializers.SerializerMethodField()
+    
+    class Meta(PostSerializer.Meta):
+        fields = PostSerializer.Meta.fields + ['comments']
+    
+    def get_comments(self, obj):
+        from .serializers import CommentSerializer  # Import here to avoid circular import
+        comments = obj.comments.all().order_by('-created_at')
+        return CommentSerializer(comments, many=True, context=self.context).data
 
 
 class PostDetailSerializer(PostSerializer):

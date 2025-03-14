@@ -100,6 +100,12 @@ class Post(models.Model):
         upload_to="posts/",
         validators=[FileExtensionValidator(["png", "jpg", "jpeg"])],
     )
+    user = models.ForeignKey(
+        "Account",
+        verbose_name=_("User"),
+        on_delete=models.CASCADE,
+        related_name="posts",
+    )
 
     description = models.TextField(
         _("Description"),
