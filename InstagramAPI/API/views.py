@@ -13,6 +13,75 @@ from .models import *
 from .helpers import *
 
 # Views of the App
+class StoryViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for managing stories
+    """
+    serializer_class = StorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        """
+        Return stories that are less than 24 hours old.
+        For list actions, return stories from users the current user follows
+        plus their own stories.
+        """
+        # Only show stories less than 24 hours old
+        # twenty_four_hours_ago = timezone.now() - timedelta(hours=24)
+        # queryset = Story.objects.filter(created_at__gt=twenty_four_hours_ago)
+        queryset = Story.objects.all()
+
+        if self.action == 'list':
+            # For the main list, show stories from followed users and own stories
+            following_users = self.request.user.following.values_list('following', flat=True)
+            return queryset.filter(
+                models.Q(user__in=following_users) | models.Q(user=self.request.user)
+            ).order_by('-created_at')
+        
+        return queryset
+    
+    def perform_create(self, serializer):
+        """
+        Assign the current user when creating a story
+        """
+        serializer.save(user=self.request.user)
+    
+    @action(detail=False, methods=['get'])
+    def my_stories(self, request):
+        """
+        Return all of the current user's active stories
+        """
+        twenty_four_hours_ago = timezone.now() - timedelta(hours=24)
+        stories = Story.objects.filter(
+            user=request.user,
+            created_at__gt=twenty_four_hours_ago
+        ).order_by('-created_at')
+        
+        serializer = self.get_serializer(stories, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def user_stories(self, request):
+        """
+        Return all stories for a specific user (if provided in query params)
+        """
+        user_id = request.query_params.get('user_id')
+        if not user_id:
+            return Response(
+                {"error": "user_id query parameter is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        twenty_four_hours_ago = timezone.now() - timedelta(hours=24)
+        stories = Story.objects.filter(
+            user_id=user_id,
+            created_at__gt=twenty_four_hours_ago
+        ).order_by('-created_at')
+        
+        serializer = self.get_serializer(stories, many=True)
+        return Response(serializer.data)
+
+
 class PostViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows posts to be viewed or edited.

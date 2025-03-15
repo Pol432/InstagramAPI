@@ -1,7 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    PostViewSet, 
+    PostViewSet,
+    StoryViewSet,
     UserRegister, 
     UserLogin, 
     UserLogout,
@@ -10,8 +11,7 @@ from .views import (
 # Create router for ViewSets
 router = DefaultRouter()
 router.register(r'posts', PostViewSet, basename='post')
-# Register other ViewSets as needed
-# router.register(r'accounts', AccountViewSet, basename='account')
+router.register(r'stories', StoryViewSet, basename='story')
 
 # Define URL patterns
 urlpatterns = [
